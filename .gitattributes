@@ -1,0 +1,2 @@
+data/vectorstore/chroma.sqlite3 filter=lfs diff=lfs merge=lfs -text
+data/vectorstore/** filter=lfs diff=lfs merge=lfs -text
