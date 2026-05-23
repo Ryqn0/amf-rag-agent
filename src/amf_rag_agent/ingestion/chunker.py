@@ -1,5 +1,3 @@
-
-
 def chunk_pages(pages: list[dict], chunk_size: int = 800, overlap: int = 200) -> list[dict]:
     """Split parsed pages into smaller chunks with overlap."""
 

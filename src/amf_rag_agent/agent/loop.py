@@ -1,12 +1,27 @@
+from amf_rag_agent.retrieval.embedder import get_embeddings
+from amf_rag_agent.retrieval.store import search
+
 from amf_rag_agent import config
+
 import anthropic
 
 api_key = config.ANTHROPIC_API_KEY
 client = anthropic.Anthropic(api_key=api_key)
 
 def search_documents(query: str) -> list[str]:
-    # Placeholder for document search logic
-    return ["Fake chunk 1", "Fake chunk 2"]
+    """
+    Search for relevant documents based on a query.
+    Args:
+        query (str): The search query.
+    Returns:
+        list[str]: A list of relevant document texts.
+    """
+
+    embedding = get_embeddings([query])[0]
+
+    result = search(embedding, k=5)
+
+    return [chunk["text"] for chunk in result]
 
 tools = [
     {
@@ -44,14 +59,18 @@ def run_agent(query: str, tools: list[dict]):
 
     while not done:
 
+        print("Calling model...")
+
         response = client.messages.create(model="claude-haiku-4-5-20251001",
                                           tools=tools,
-                                          max_tokens=256, 
+                                          max_tokens=1024, 
                                           messages=history)
     
         if response.stop_reason == "tool_use":
             
             tool_block = next(block for block in response.content if block.type == "tool_use")
+
+            print(f"Model wants to use tool: {tool_block.name}")
 
             history.append(
                 {
@@ -75,13 +94,15 @@ def run_agent(query: str, tools: list[dict]):
                 }
             )
 
+            print(f"Tool result added, looping back...")
 
         elif response.stop_reason == "end_turn":
             # model is done
+            print("Model finished.")
             done = True
     
     return response.content[0].text
 
 if __name__ == "__main__":
-    answer = run_agent("What is the AMF?", tools)
+    answer = run_agent("What are the main risk factors for TotalEnergies?", tools)
     print(answer)
