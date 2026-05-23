@@ -24,6 +24,14 @@ tools = [
 
 
 def run_agent(query: str, tools: list[dict]):
+    """Run the RAG agent with the given query and tools.
+    Args:
+        query (str): The user's query.
+        tools (list[dict]): A list of tools that the agent can use.
+        
+    Returns:
+        str: The agent's final response.
+    """
 
     history= [
         {
