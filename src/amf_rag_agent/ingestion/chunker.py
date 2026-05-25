@@ -1,5 +1,12 @@
 def chunk_pages(pages: list[dict], chunk_size: int = 800, overlap: int = 200) -> list[dict]:
-    """Split parsed pages into smaller chunks with overlap."""
+    """Split parsed pages into smaller chunks with overlap.
+    Args:
+        pages (list[dict]): A list of parsed pages, where each page is a dict with keys "text", "page_number", and "source".
+        chunk_size (int): The maximum number of characters in each chunk.
+        overlap (int): The number of overlapping characters between consecutive chunks.
+    Returns:
+        list[dict]: A list of chunks, where each chunk is a dict with keys "text", "page_number", "source", and "chunk_index".
+    """
 
     chunks = []
     chunk_index = 0

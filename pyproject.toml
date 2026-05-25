@@ -25,3 +25,8 @@ packages = ["src/amf_rag_agent"]
 
 [tool.uv]
 torch-backend = "cpu"
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.3",
+]
