@@ -8,7 +8,7 @@ import anthropic
 api_key = config.ANTHROPIC_API_KEY
 client = anthropic.Anthropic(api_key=api_key)
 
-def search_documents(query: str) -> list[str]:
+def search_documents(query: str) -> list[dict]:
     """
     Search for relevant documents based on a query.
     Args:
@@ -19,9 +19,12 @@ def search_documents(query: str) -> list[str]:
 
     embedding = get_embeddings([query])[0]
 
-    result = search(embedding, k=5)
+    results = search(embedding, k=5)
 
-    return [chunk["text"] for chunk in result]
+    return [{"text": result["text"], 
+             "source": result["source"],
+             "page_number": result["page_number"]} for result in results]
+    # return [chunk["text"] for chunk in result]
 
 tools = [
     {
@@ -48,7 +51,9 @@ def run_agent(query: str, tools: list[dict]):
         str: The agent's final response.
     """
 
-    history= [
+    sources = []
+
+    history = [
         {
             "role": "user",
             "content": query,
@@ -88,11 +93,13 @@ def run_agent(query: str, tools: list[dict]):
                         {
                             "type": "tool_result",
                             "tool_use_id": tool_block.id,
-                            "content": ("\n").join(result),
+                            "content": ("\n").join(r["text"] for r in result),
                         }
                     ],
                 }
             )
+
+            sources.extend(result)
 
             print(f"Tool result added, looping back...")
 
@@ -101,8 +108,9 @@ def run_agent(query: str, tools: list[dict]):
             print("Model finished.")
             done = True
     
-    return response.content[0].text
+    return {"answer": response.content[0].text, 
+            "sources": sources}
 
 if __name__ == "__main__":
-    answer = run_agent("What are the main risk factors for TotalEnergies?", tools)
+    answer = run_agent("What are the main risk factors for TotalEnergies?", tools)["answer"]
     print(answer)
