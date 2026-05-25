@@ -6,9 +6,13 @@ import sys
 load_dotenv()
 
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
-# Validation 
-if not ANTHROPIC_API_KEY:
-    raise ValueError("ANTHROPIC_API_KEY is not set")
+
+# VALIDATION
+def validate_config():
+    if not ANTHROPIC_API_KEY:
+        raise ValueError("ANTHROPIC_API_KEY is not set")
+    
+validate_config()
 
 def setup_logging(level = logging.INFO):
     """
