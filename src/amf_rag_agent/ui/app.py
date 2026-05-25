@@ -1,5 +1,5 @@
 import streamlit as st
-import requests
+from amf_rag_agent.agent.loop import run_agent, tools
 import os
 
 API_URL = os.getenv("API_URL", "http://localhost:8000")
@@ -32,7 +32,7 @@ if prompt := st.chat_input("What is up?"):
             try:
 
                 
-                data = requests.post(f"{API_URL}/ask", json={"question": prompt}).json()
+                data = run_agent(prompt, tools)
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 st.markdown(data['answer'])
                 

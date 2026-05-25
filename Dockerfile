@@ -16,6 +16,8 @@ RUN uv pip install --system -r pyproject.toml
 # Copying source code
 COPY src/ ./src/
 
+COPY data/vectorstore/ ./data/vectorstore/
+
 # Install package itself
 RUN uv pip install --system --no-deps .
 
