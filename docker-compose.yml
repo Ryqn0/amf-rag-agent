@@ -1,0 +1,22 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./data:/app/data  # host path : container path
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+  
+  ui:
+    build: 
+      context: .
+      dockerfile: Dockerfile.ui
+    ports:
+      - "8501:8501"
+    depends_on:
+      api:
+        condition: service_started
+    environment:
+      - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+      - API_URL=http://api:8000

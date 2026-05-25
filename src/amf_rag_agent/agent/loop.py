@@ -18,7 +18,6 @@ def search_documents(query: str) -> list[dict]:
     """
 
     embedding = get_embeddings([query])[0]
-
     results = search(embedding, k=5)
 
     return [{"text": result["text"], 
@@ -52,20 +51,17 @@ def run_agent(query: str, tools: list[dict]):
     """
 
     sources = []
-
     history = [
         {
             "role": "user",
             "content": query,
         }
     ]
-
     done = False
 
     while not done:
 
         print("Calling model...")
-
         response = client.messages.create(model="claude-haiku-4-5-20251001",
                                           tools=tools,
                                           max_tokens=1024, 
@@ -73,34 +69,47 @@ def run_agent(query: str, tools: list[dict]):
     
         if response.stop_reason == "tool_use":
             
-            tool_block = next(block for block in response.content if block.type == "tool_use")
-
-            print(f"Model wants to use tool: {tool_block.name}")
-
+            tool_blocks = [block for block in response.content if block.type == "tool_use"]
             history.append(
                 {
                     "role": "assistant",
                     "content": response.content
                 }
             )
+            tool_results = []
 
-            result = search_documents(tool_block.input["query"])
+            for tool_block in tool_blocks:
+                print(f"Model wants to use tool: {tool_block.name}")
 
-            history.append(
-                {
-                    "role": "user",
-                    "content": [
-                        {
-                            "type": "tool_result",
-                            "tool_use_id": tool_block.id,
-                            "content": ("\n").join(r["text"] for r in result),
-                        }
-                    ],
-                }
-            )
+                try :
 
-            sources.extend(result)
+                    result = search_documents(tool_block.input["query"])
+                    tool_content = "\n".join(r["text"] for r in result)
+                    sources.extend(result)
 
+                except Exception as e:
+
+                    tool_content = f"Search failed: {str(e)}"
+
+
+                history.append(
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "tool_result",
+                                "tool_use_id": tool_block.id,
+                                "content": tool_content,
+                            }
+                        ],
+                    }
+                )
+
+            history.append({
+                "role": "user",
+                "content": tool_results
+            })
+            
             print(f"Tool result added, looping back...")
 
         elif response.stop_reason == "end_turn":
