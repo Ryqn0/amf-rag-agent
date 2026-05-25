@@ -4,6 +4,9 @@ from amf_rag_agent.retrieval.store import search
 from amf_rag_agent import config
 
 import anthropic
+import logging
+logger = logging.getLogger(__name__)
+
 
 api_key = config.ANTHROPIC_API_KEY
 client = anthropic.Anthropic(api_key=api_key)
@@ -61,7 +64,7 @@ def run_agent(query: str, tools: list[dict]):
 
     while not done:
 
-        print("Calling model...")
+        logger.info("Calling model...")
         response = client.messages.create(model="claude-haiku-4-5-20251001",
                                           tools=tools,
                                           max_tokens=1024, 
@@ -79,7 +82,7 @@ def run_agent(query: str, tools: list[dict]):
             tool_results = []
 
             for tool_block in tool_blocks:
-                print(f"Model wants to use tool: {tool_block.name}")
+                logger.info(f"Model wants to use tool: {tool_block.name}")
 
                 try :
 
@@ -92,29 +95,22 @@ def run_agent(query: str, tools: list[dict]):
                     tool_content = f"Search failed: {str(e)}"
 
 
-                history.append(
-                    {
-                        "role": "user",
-                        "content": [
-                            {
-                                "type": "tool_result",
-                                "tool_use_id": tool_block.id,
-                                "content": tool_content,
-                            }
-                        ],
-                    }
-                )
+                tool_results.append({
+                    "type": "tool_result",
+                    "tool_use_id": tool_block.id,
+                    "content": tool_content
+                })
 
             history.append({
                 "role": "user",
                 "content": tool_results
             })
             
-            print(f"Tool result added, looping back...")
+            logger.info(f"Tool result added, looping back...")
 
         elif response.stop_reason == "end_turn":
             # model is done
-            print("Model finished.")
+            logger.info("Model finished.")
             done = True
     
     return {"answer": response.content[0].text, 

@@ -1,9 +1,19 @@
 import pydantic
 import fastapi
+from contextlib import asynccontextmanager
 
+from amf_rag_agent import config
 from amf_rag_agent.agent.loop import run_agent, tools
 
-app = fastapi.FastAPI()
+@asynccontextmanager
+async def lifespan(app: fastapi.FastAPI):
+
+    config.setup_logging()
+    yield
+    # shutdown code here
+
+
+app = fastapi.FastAPI(lifespan=lifespan)
 
 class QuestionRequest(pydantic.BaseModel):
 
