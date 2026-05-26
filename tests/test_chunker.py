@@ -32,10 +32,15 @@ def sample_pages():
     ]
 
 
-def test_shape_list_dict(sample_pages):
+@pytest.mark.parametrize("chunk_size, overlap", [
+    (100, 20),
+    (200, 40),
+    (800, 160)
+])
+def test_shape_list_dict(sample_pages, chunk_size, overlap):
     """Helper function to verify that all chunks have the correct shape."""
 
-    chunks = chunk_pages(sample_pages, chunk_size=50, overlap=20)
+    chunks = chunk_pages(sample_pages, chunk_size=chunk_size, overlap=overlap)
 
     for chunk in chunks:
 
@@ -45,10 +50,15 @@ def test_shape_list_dict(sample_pages):
         assert "chunk_index" in chunk, f"Chunk {chunk['chunk_index']} is missing 'chunk_index' key."
 
 
-def test_metadata_consistency(sample_pages):
+@pytest.mark.parametrize("chunk_size, overlap", [
+    (100, 20),
+    (200, 40),
+    (800, 160)
+])
+def test_metadata_consistency(sample_pages, chunk_size, overlap):
     """Helper function to verify that the metadata in the chunks is consistent with the original pages."""
 
-    chunks = chunk_pages(sample_pages, chunk_size=100, overlap=20)
+    chunks = chunk_pages(sample_pages, chunk_size=chunk_size, overlap=overlap)
     valid_sources = {p["source"] for p in sample_pages}
     valid_page_numbers = {p["page_number"] for p in sample_pages}
 
@@ -57,10 +67,15 @@ def test_metadata_consistency(sample_pages):
         assert chunk["page_number"] in valid_page_numbers
 
 
-def test_overlap(sample_pages):
+@pytest.mark.parametrize("chunk_size, overlap", [
+    (100, 20),
+    (200, 40),
+    (800, 160)
+])
+def test_overlap(sample_pages, chunk_size, overlap):
     """Helper function to verify that the specified overlap is maintained between consecutive chunks."""
 
-    chunks = chunk_pages(sample_pages, chunk_size=50, overlap=20)
+    chunks = chunk_pages(sample_pages, chunk_size=chunk_size, overlap=overlap)
 
     for chunk in chunks:
 
@@ -74,20 +89,30 @@ def test_overlap(sample_pages):
                 assert overlap_text in previous_chunk["text"], f"Chunk {chunk['chunk_index']} does not maintain the specified overlap with the previous chunk."
 
 
-def test_no_empty_text(sample_pages):
+@pytest.mark.parametrize("chunk_size, overlap", [
+    (100, 20),
+    (200, 40),
+    (800, 160)
+])
+def test_no_empty_text(sample_pages, chunk_size, overlap):
     """Helper function to verify that no chunk has empty text."""
 
-    chunks = chunk_pages(sample_pages, chunk_size=50, overlap=20)
+    chunks = chunk_pages(sample_pages, chunk_size=chunk_size, overlap=overlap)
 
     for chunk in chunks:
 
         assert chunk["text"].strip() != "", f"Chunk {chunk['chunk_index']} has empty text."
 
 
-def test_chunk_index_increment(sample_pages):
+@pytest.mark.parametrize("chunk_size, overlap", [
+    (100, 20),
+    (200, 50),
+    (800, 160)
+])
+def test_chunk_index_increment(sample_pages, chunk_size, overlap):
     """Helper function to verify that the chunk_index is incremented correctly for each chunk."""
 
-    chunks = chunk_pages(sample_pages, chunk_size=50, overlap=20)
+    chunks = chunk_pages(sample_pages, chunk_size=chunk_size, overlap=overlap)
 
     for i, chunk in enumerate(chunks):
 
