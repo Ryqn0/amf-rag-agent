@@ -2,9 +2,20 @@ import sentence_transformers
 import numpy as np
 import time
 
-MODEL = sentence_transformers.SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+# MODEL = sentence_transformers.SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
 # MODEL = sentence_transformers.SentenceTransformer("sentence-transformers/paraphrase-multilingual-mpnet-base-v2")
 # Using this model because it returns an embedding vector of 768 which is close to the chunk_size and then also because of the balance performance and query per second
+
+
+_model = None
+
+def get_model():
+    global _model
+    if _model is None:
+        _model = sentence_transformers.SentenceTransformer("sentence-transformers/paraphrase-multilingual-MiniLM-L12-v2")
+    return _model
+
+
 
 def get_embeddings(texts: list[str]) -> np.ndarray:
     """
@@ -15,7 +26,7 @@ def get_embeddings(texts: list[str]) -> np.ndarray:
         np.ndarray: Embeddings for the input texts.
     """
     
-    embeddings = MODEL.encode(texts)
+    embeddings = get_model().encode(texts)
 
     return embeddings
     

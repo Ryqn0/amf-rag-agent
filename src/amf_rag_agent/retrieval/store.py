@@ -1,9 +1,35 @@
 import chromadb
 import numpy as np
 
-client = chromadb.PersistentClient(path="data/vectorstore")
+# client = chromadb.PersistentClient(path="data/vectorstore")
 
-collection = client.get_or_create_collection(name="amf_docs")
+_client = None
+
+
+def get_client():
+    """Get the ChromaDB client, initializing it if it doesn't exist.
+    Returns:
+        chromadb.PersistentClient: The ChromaDB client.
+"""
+    global _client
+    if _client is None:
+        _client = chromadb.PersistentClient(path="data/vectorstore")
+    return _client
+
+
+_collection = None
+
+
+def get_collection():
+    """Get the ChromaDB collection, initializing it if it doesn't exist.
+    Returns:
+        chromadb.Collection: The ChromaDB collection.
+    """
+    global _collection
+    if _collection is None:
+        _collection = get_client().get_or_create_collection(name="amf_docs")
+    return _collection
+
 
 def add_chunks(chunks: list[dict], embeddings: np.ndarray, batch_size: int = 5000):
     """
@@ -17,7 +43,7 @@ def add_chunks(chunks: list[dict], embeddings: np.ndarray, batch_size: int = 500
         batch_chunks = chunks[i:i+batch_size]
         batch_embeddings = embeddings[i:i+batch_size]
 
-        collection.add(ids=[f"chunk_{chunk['chunk_index']}" for chunk in batch_chunks],
+        get_collection().add(ids=[f"chunk_{chunk['chunk_index']}" for chunk in batch_chunks],
                     documents=[chunk['text'] for chunk in batch_chunks],
                     embeddings=batch_embeddings.tolist(),
                     metadatas=[{"page_number": chunk['page_number'], 
@@ -35,7 +61,7 @@ def search(query_embedding: np.ndarray, k: int = 5) -> list[dict]:
         list[dict]: A list of dictionaries containing the relevant chunks and their metadata.
     """
 
-    results = collection.query(query_embeddings=[query_embedding.tolist()], n_results=k)
+    results = get_collection().query(query_embeddings=[query_embedding.tolist()], n_results=k)
 
     output = []
 
