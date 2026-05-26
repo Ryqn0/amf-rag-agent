@@ -1,4 +1,5 @@
 import pymupdf
+import os
 
 
 def parse_pdf(file_path: str) -> list[dict] :
@@ -19,7 +20,7 @@ def parse_pdf(file_path: str) -> list[dict] :
     for i in range(n):
         parsed.append(
             {
-                "source": file_path,
+                "source": os.path.basename(file_path),
                 "page_number": i + 1,
                 "text" : doc[i].get_text(),
             }
