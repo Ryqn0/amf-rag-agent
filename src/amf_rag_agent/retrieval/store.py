@@ -43,7 +43,7 @@ def add_chunks(chunks: list[dict], embeddings: np.ndarray, batch_size: int = 500
         batch_chunks = chunks[i:i+batch_size]
         batch_embeddings = embeddings[i:i+batch_size]
 
-        get_collection().add(ids=[f"chunk_{chunk['chunk_index']}" for chunk in batch_chunks],
+        get_collection().add(ids=[f"{chunk['source']}_chunk_{chunk['chunk_index']}" for chunk in batch_chunks],
                     documents=[chunk['text'] for chunk in batch_chunks],
                     embeddings=batch_embeddings.tolist(),
                     metadatas=[{"page_number": chunk['page_number'], 

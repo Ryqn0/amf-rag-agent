@@ -8,7 +8,9 @@ from amf_rag_agent.config import setup_logging
 setup_logging()
 
 
-st.title("AMF RAG AGENT Chat Interface")
+st.title("Bilingual (FR/EN) AMF RAG AGENT Chat Interface")
+st.subheader("Ask questions about the ingested documents and get answers with sources")
+st.write("Current source documents: TotalEnergies, BNP Paribas, LVMH, Airbus - all from 2025 Universal Registration Documents (URD).")
 
 if "messages" not in st.session_state:
 

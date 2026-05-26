@@ -1,0 +1,40 @@
+{
+  "ingested_files": [
+    {
+      "filename": "airbus-deu-2025-en.xhtml",
+      "ingested_at": "2026-05-26T22:50:32.502045"
+    },
+    {
+      "filename": "bnp-2025-12-31-1-en.html",
+      "ingested_at": "2026-05-26T22:50:35.361317"
+    },
+    {
+      "filename": "bnp-2025-12-31-1-fr.html",
+      "ingested_at": "2026-05-26T22:50:38.425946"
+    },
+    {
+      "filename": "bnp-2025-amandment-en.pdf",
+      "ingested_at": "2026-05-26T22:50:38.750656"
+    },
+    {
+      "filename": "bnp-2025-amandment-fr.pdf",
+      "ingested_at": "2026-05-26T22:50:39.322954"
+    },
+    {
+      "filename": "lvmh-deu-2025-en.pdf",
+      "ingested_at": "2026-05-26T22:50:40.588701"
+    },
+    {
+      "filename": "lvmh-deu-2025-fr.xhtml",
+      "ingested_at": "2026-05-26T22:50:42.069057"
+    },
+    {
+      "filename": "totalenergie-deu-2025-en.pdf",
+      "ingested_at": "2026-05-26T22:50:44.129857"
+    },
+    {
+      "filename": "totalenergie-deu-2025-fr.xhtml",
+      "ingested_at": "2026-05-26T22:50:47.594383"
+    }
+  ]
+}
