@@ -1,5 +1,6 @@
 from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import search
+from amf_rag_agent.retrieval.reranker import rerank_chunks
 import asyncio
 from amf_rag_agent import config
 
@@ -21,7 +22,8 @@ def search_documents(query: str) -> list[dict]:
     """
 
     embedding = get_embeddings([query])[0]
-    results = search(embedding, k=5)
+    results = search(embedding, k=20)
+    results = rerank_chunks(query, results, top_k=5)
 
     return [{"text": result["text"], 
              "source": result["source"],
