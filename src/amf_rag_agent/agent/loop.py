@@ -117,5 +117,8 @@ def run_agent(query: str, tools: list[dict]):
             "sources": sources}
 
 if __name__ == "__main__":
+
+    from amf_rag_agent.config import setup_logging
+    setup_logging()
     answer = run_agent("What are the main risk factors for TotalEnergies?", tools)["answer"]
     print(answer)
