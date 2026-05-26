@@ -1,8 +1,11 @@
 import streamlit as st
 from amf_rag_agent.agent.loop import run_agent, tools
 import os
+import asyncio
+from amf_rag_agent.config import setup_logging
 
-API_URL = os.getenv("API_URL", "http://localhost:8000")
+
+setup_logging()
 
 
 st.title("AMF RAG AGENT Chat Interface")
@@ -32,7 +35,7 @@ if prompt := st.chat_input("What is up?"):
             try:
 
                 
-                data = run_agent(prompt, tools)
+                data = asyncio.run(run_agent(prompt, tools))
                 st.session_state.messages.append({"role": "user", "content": prompt})
                 st.markdown(data['answer'])
                 

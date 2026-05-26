@@ -27,9 +27,9 @@ class AnswerResponse(pydantic.BaseModel):
 
 
 @app.post("/ask", response_model=AnswerResponse)
-def ask(request: QuestionRequest) -> AnswerResponse:
+async def ask(request: QuestionRequest) -> AnswerResponse:
 
-    response = run_agent(request.question, tools)
+    response = await run_agent(request.question, tools)
 
     return AnswerResponse(
         answer=response['answer'],

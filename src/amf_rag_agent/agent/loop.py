@@ -1,15 +1,15 @@
 from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import search
-
+import asyncio
 from amf_rag_agent import config
 
-import anthropic
+from anthropic import AsyncAnthropic
 import logging
 logger = logging.getLogger(__name__)
 
 
 api_key = config.ANTHROPIC_API_KEY
-client = anthropic.Anthropic(api_key=api_key)
+client = AsyncAnthropic(api_key=api_key)
 
 def search_documents(query: str) -> list[dict]:
     """
@@ -43,7 +43,7 @@ tools = [
 ]
 
 
-def run_agent(query: str, tools: list[dict]):
+async def run_agent(query: str, tools: list[dict]):
     """Run the RAG agent with the given query and tools.
     Args:
         query (str): The user's query.
@@ -65,7 +65,7 @@ def run_agent(query: str, tools: list[dict]):
     while not done:
 
         logger.info("Calling model...")
-        response = client.messages.create(model="claude-haiku-4-5-20251001",
+        response = await client.messages.create(model="claude-haiku-4-5-20251001",
                                           tools=tools,
                                           max_tokens=1024, 
                                           messages=history)
@@ -120,5 +120,5 @@ if __name__ == "__main__":
 
     from amf_rag_agent.config import setup_logging
     setup_logging()
-    answer = run_agent("What are the main risk factors for TotalEnergies?", tools)["answer"]
+    answer = asyncio.run(run_agent("What are the main risk factors for TotalEnergies?", tools))["answer"]
     print(answer)
