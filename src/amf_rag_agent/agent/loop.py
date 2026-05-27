@@ -2,11 +2,13 @@ from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import search
 from amf_rag_agent.retrieval.bm25_store import search_bm25
 from amf_rag_agent.retrieval.reranker import rerank_chunks
+from amf_rag_agent.retrieval.query_expander import needs_expansion, expand_query
 import asyncio
 from amf_rag_agent import config
 
 from anthropic import AsyncAnthropic
 import logging
+
 logger = logging.getLogger(__name__)
 
 
@@ -19,31 +21,51 @@ def search_documents(query: str) -> list[dict]:
     Args:
         query (str): The search query.
     Returns:
-        list[str]: A list of relevant document texts.
+        list[dict]: A list of relevant document texts.
     """
 
-    logger.info(f"Searching documents for query: {query}")
-    embedding = get_embeddings([query])[0]
-    logger.info("Query embedding obtained.")
-    logger.info("Performing semantic search in the vector store...")
-    semantic_results = search(embedding, k=20)
-    logger.info(f"Semantic search returned {len(semantic_results)} results.")
-    logger.info("Performing BM25 search...")
-    bm25_results = search_bm25(query, k=20)
-    logger.info(f"BM25 search returned {len(bm25_results)} results.")
+    logger.info(f"Received query: {query}")
+    
+    '''
+    It seems that Claude Haiku already do query decomposition so it is better to let it handle that instead of doing it ourselves.
+    logger.info("Checking if query needs expansion...")
+
+    if needs_expansion(query):
+
+        logger.info("Query needs expansion, generating alternatives...")
+        queries = await expand_query(query)
+        logger.info(f"Generated {len(queries)} expanded queries.")
+
+    else:
+
+        logger.info("Query does not need expansion.")
+        '''
+    
+    queries = [query]
+
 
     seen = set()
     combined_results = []
 
     logger.info("Combining and deduplicating results from semantic search and BM25...")
-    for result in semantic_results + bm25_results:
 
-        if result["text"] not in seen:
-            logger.info(f"Adding new result to combined results: {result['text'][:50]}...")
-            seen.add(result["text"])
-            combined_results.append(result)
+    for q in queries:
 
-    return rerank_chunks(query, combined_results, top_k=5)
+        logger.info(f"Processing query: {q}")
+        logger.info("Getting embedding for query...")
+        embedding = get_embeddings([q])[0]
+
+        for result in search(embedding, k=20) + search_bm25(q, k=20):
+
+            logger.info(f"Processing result: {result['text'][:50]}...")
+            
+            if result["text"] not in seen:
+
+                logger.info(f"Adding new result to combined results: {result['text'][:50]}...")
+                seen.add(result["text"])
+                combined_results.append(result)
+
+    return rerank_chunks(queries[0], combined_results, top_k=5)
 
 
 tools = [
@@ -79,6 +101,9 @@ async def run_agent(query: str, tools: list[dict]):
         }
     ]
     done = False
+
+    logger.info(f"Starting agent loop with query: {query}")
+    logger.info(f"Query length: {len(query.split())} words.")
 
     while not done:
 
