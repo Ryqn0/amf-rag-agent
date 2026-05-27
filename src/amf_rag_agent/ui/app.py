@@ -1,11 +1,14 @@
 import streamlit as st
 from amf_rag_agent.agent.loop import run_agent, tools
-import os
+from amf_rag_agent.retrieval.store import load_all_chunks
+from amf_rag_agent.retrieval.bm25_store import build_bm25_index
 import asyncio
 from amf_rag_agent.config import setup_logging
 
 
 setup_logging()
+chunks = load_all_chunks()
+build_bm25_index(chunks)
 
 
 st.title("Bilingual (FR/EN) AMF RAG AGENT Chat Interface")

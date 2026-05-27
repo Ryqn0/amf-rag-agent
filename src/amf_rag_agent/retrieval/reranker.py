@@ -1,6 +1,5 @@
 from sentence_transformers import CrossEncoder
 from logging import getLogger
-from amf_rag_agent.config import setup_logging
 
 logger = getLogger(__name__)
 

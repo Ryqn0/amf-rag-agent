@@ -1,5 +1,6 @@
 from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import search
+from amf_rag_agent.retrieval.bm25_store import search_bm25
 from amf_rag_agent.retrieval.reranker import rerank_chunks
 import asyncio
 from amf_rag_agent import config
@@ -21,14 +22,29 @@ def search_documents(query: str) -> list[dict]:
         list[str]: A list of relevant document texts.
     """
 
+    logger.info(f"Searching documents for query: {query}")
     embedding = get_embeddings([query])[0]
-    results = search(embedding, k=20)
-    results = rerank_chunks(query, results, top_k=5)
+    logger.info("Query embedding obtained.")
+    logger.info("Performing semantic search in the vector store...")
+    semantic_results = search(embedding, k=20)
+    logger.info(f"Semantic search returned {len(semantic_results)} results.")
+    logger.info("Performing BM25 search...")
+    bm25_results = search_bm25(query, k=20)
+    logger.info(f"BM25 search returned {len(bm25_results)} results.")
 
-    return [{"text": result["text"], 
-             "source": result["source"],
-             "page_number": result["page_number"]} for result in results]
-    # return [chunk["text"] for chunk in result]
+    seen = set()
+    combined_results = []
+
+    logger.info("Combining and deduplicating results from semantic search and BM25...")
+    for result in semantic_results + bm25_results:
+
+        if result["text"] not in seen:
+            logger.info(f"Adding new result to combined results: {result['text'][:50]}...")
+            seen.add(result["text"])
+            combined_results.append(result)
+
+    return rerank_chunks(query, combined_results, top_k=5)
+
 
 tools = [
     {
