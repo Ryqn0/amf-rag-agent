@@ -23,10 +23,10 @@ COPY data/vectorstore/ ./data/vectorstore/
 # Install package itself
 RUN uv pip install --system --no-deps .
 
-# Installing the embedder model 
+# Installing the embedder model
 RUN python -c "from sentence_transformers import SentenceTransformer; \
     SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
 
-EXPOSE 8000
+EXPOSE 7860
 
-CMD ["python", "-m", "uvicorn", "amf_rag_agent.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["streamlit", "run", "src/amf_rag_agent/ui/app.py", "--server.port", "7860", "--server.address", "0.0.0.0"]
