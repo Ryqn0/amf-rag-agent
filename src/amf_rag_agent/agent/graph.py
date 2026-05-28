@@ -1,3 +1,4 @@
+import os
 from typing import TypedDict, Annotated
 from anthropic.types import MessageParam
 from langgraph.graph import StateGraph, END
@@ -5,9 +6,15 @@ from operator import add
 from amf_rag_agent.agent.loop import client, tools
 from logging import getLogger
 from amf_rag_agent.agent.loop import search_documents
+from langsmith import traceable
 
 
 logger = getLogger(__name__)
+
+# os.environ["LANGCHAIN_TRACING"] = "true"
+# os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY", "")
+# os.environ["LANGCHAIN_PROJECT"] = "amf-rag-agent"
+# os.environ["LANGSMITH_ENDPOINT"] = "https://eu.api.smith.langchain.com"
 
 
 class AgentState(TypedDict):
@@ -16,6 +23,7 @@ class AgentState(TypedDict):
     sources: Annotated[list[dict], add]             # Retrieved documents or sources relevant to the query.
 
 
+@traceable
 async def call_llm(state: AgentState):
     """
     Make a call to the LLM with the current conversation history and tools.
@@ -39,6 +47,7 @@ async def call_llm(state: AgentState):
     }
 
 
+@traceable
 async def execute_tools(state: AgentState) -> AgentState:
     """
     Execute any tools that the LLM has indicated it wants to use.
@@ -91,6 +100,7 @@ async def execute_tools(state: AgentState) -> AgentState:
     }
 
 
+@traceable
 def should_continue(state: AgentState) -> str:
 
     logger.info("Determining if agent should continue or end.")
@@ -115,6 +125,7 @@ graph.add_edge("execute_tools", "call_llm")
 app = graph.compile()
 
 
+@traceable
 async def run_agent(query: str) -> dict:
     """
     Run the agent with a given query.

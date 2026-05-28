@@ -2,9 +2,10 @@ from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import search
 from amf_rag_agent.retrieval.bm25_store import search_bm25
 from amf_rag_agent.retrieval.reranker import rerank_chunks
-from amf_rag_agent.retrieval.query_expander import needs_expansion, expand_query
+# from amf_rag_agent.retrieval.query_expander import needs_expansion, expand_query
 import asyncio
 from amf_rag_agent import config
+from langsmith import traceable
 
 from anthropic import AsyncAnthropic
 import logging
@@ -82,7 +83,7 @@ tools = [
     }
 ]
 
-
+@traceable
 async def run_agent(query: str, tools: list[dict]):
     """Run the RAG agent with the given query and tools.
     Args:
