@@ -91,6 +91,8 @@ def run_ingestion_pipeline(file_paths: list[str]):
         
         logger.info(f"Parsed {len(pages)} pages.")
         logger.info("Chunking pages...")
+        # chunk_pages: character-based with overlap — robust for table-heavy financial documents
+        # semantic_chunk_pages: meaning-boundary splitting — better for prose-heavy documents
         chunks = chunk_pages(pages)
         all_chunks.extend(chunks)
         logger.info(f"Chunked into {len(chunks)} chunks.")
