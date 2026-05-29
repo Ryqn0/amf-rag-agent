@@ -1,4 +1,4 @@
-import os
+import asyncio
 from typing import TypedDict, Annotated
 from anthropic.types import MessageParam
 from langgraph.graph import StateGraph, END
@@ -65,27 +65,16 @@ async def execute_tools(state: AgentState) -> AgentState:
     tool_results = []
     all_sources = []
 
-    for block in tool_blocks:
+    search_results = await asyncio.gather(*[asyncio.to_thread(search_documents, block.input["query"]) for block in tool_blocks])
 
-        logger.info(f"Processing tool use block: {block.name} with input: {block.input}")
 
-        try:
+    for block, results in zip(tool_blocks, search_results):
 
-            logger.info(f"Executing tool: {block.name} with query: {block.input['query']}")
-            results = search_documents(block.input["query"])
-            logger.info(f"Tool execution results: {results}")
-            logger.info(f"Formatting tool results for message content.")
-            tool_content = "\n".join(r["text"] for r in results)
-            logger.info(f"Tool content formatted: {tool_content}")
-            logger.info(f"Adding tool results to sources.")
-            all_sources.extend(results)
-
-        except Exception as e:
-
-            logger.error(f"Error executing tool: {block.name} with query: {block.input['query']}. Error: {str(e)}")
-            tool_content = f"Search failed: {str(e)}"
-        
-        logger.info(f"Appending tool result to tool_results list.")
+        logger.info(f"Tool results for block with query '{block.input['query']}': {results}")
+        tool_content = "\n".join([result["text"] for result in results])
+        logger.info(f"Tool content for block with query '{block.input['query']}': {tool_content}")
+        all_sources.extend(results)
+        logger.info(f"Adding tool result for block with query '{block.input['query']}' to tool results.")
         tool_results.append({
             "type": "tool_result",
             "tool_use_id": block.id,

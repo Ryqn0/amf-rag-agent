@@ -116,32 +116,30 @@ async def run_agent(query: str, tools: list[dict]):
     
         if response.stop_reason == "tool_use":
             
+            logger.info("Model requested tool use.")
             tool_blocks = [block for block in response.content if block.type == "tool_use"]
+            logger.info(f"Model requested {len(tool_blocks)} tool uses.")
             history.append(
                 {
                     "role": "assistant",
                     "content": response.content
                 }
             )
+            logger.info("Executing tool calls in parallel...")
+            search_results = await asyncio.gather(*[asyncio.to_thread(search_documents, block.input["query"]) for block in tool_blocks])
             tool_results = []
 
-            for tool_block in tool_blocks:
-                logger.info(f"Model wants to use tool: {tool_block.name}")
+            logger.info("Processing tool results...")
+            for block, results in zip(tool_blocks, search_results):
 
-                try :
-
-                    result = search_documents(tool_block.input["query"])
-                    tool_content = "\n".join(r["text"] for r in result)
-                    sources.extend(result)
-
-                except Exception as e:
-
-                    tool_content = f"Search failed: {str(e)}"
-
-
+                logger.info(f"Processing results for tool use with query: {block.input['query']}")
+                tool_content = "\n".join(r["text"] for r in results)
+                logger.info(f"Tool returned {len(results)} results, adding to sources and tool results.")
+                sources.extend(results)
+                logger.info(f"Adding tool results to tool results list.")
                 tool_results.append({
                     "type": "tool_result",
-                    "tool_use_id": tool_block.id,
+                    "tool_use_id": block.id,
                     "content": tool_content
                 })
 
