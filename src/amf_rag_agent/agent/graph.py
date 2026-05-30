@@ -17,6 +17,8 @@ logger = getLogger(__name__)
 # os.environ["LANGSMITH_ENDPOINT"] = "https://eu.api.smith.langchain.com"
 
 
+
+
 class AgentState(TypedDict):
 
     messages: Annotated[list[MessageParam], add]    # Conversation history, including user messages, assistant responses, and tool results.

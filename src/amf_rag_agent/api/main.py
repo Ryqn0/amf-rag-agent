@@ -5,8 +5,9 @@ import fastapi
 from contextlib import asynccontextmanager
 
 from amf_rag_agent import config
-from amf_rag_agent.agent.graph import run_agent
+# from amf_rag_agent.agent.graph import run_agent
 # from amf_rag_agent.agent.loop import run_agent, tools
+from amf_rag_agent.agent.graph_v2 import run_agent
 from amf_rag_agent.retrieval.bm25_store import build_bm25_index
 from amf_rag_agent.retrieval.store import load_all_chunks
 
