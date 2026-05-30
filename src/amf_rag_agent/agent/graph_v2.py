@@ -5,6 +5,7 @@ from langchain_core.tools import tool
 from langgraph.graph import StateGraph, END
 from typing import Literal, TypedDict, Annotated
 from operator import add
+from tenacity import retry, stop_after_attempt, wait_exponential
 import asyncio
 
 import logging
@@ -39,6 +40,13 @@ fallback_model = ChatOpenAI(model="gpt-4o-mini").bind_tools([search_documents])
 
 model = primary_model.with_fallbacks([fallback_model])
 
+@retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=1, min=2, max=10))
+async def invoke_model(messages):
+    """Invoke the primary model with the given messages, falling back to the secondary model if the primary fails."""
+
+    return await model.ainvoke(messages)
+
+
 
 async def call_llm(state: AgentState) -> AgentState:
     """Call the LLM with the current conversation history and tools.
@@ -50,7 +58,7 @@ async def call_llm(state: AgentState) -> AgentState:
     """
 
     logger.info("Calling LLM with current messages and tools.")
-    response = await model.ainvoke(state["messages"])
+    response = await invoke_model(state["messages"])
     logger.info(f"LLM response received: {response.content}")
 
     return {"messages": [response]}
