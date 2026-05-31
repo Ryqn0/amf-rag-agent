@@ -9,8 +9,8 @@ from amf_rag_agent import config
 # from amf_rag_agent.agent.graph import run_agent
 # from amf_rag_agent.agent.loop import run_agent, tools
 from amf_rag_agent.agent.graph_v2 import run_agent
-from amf_rag_agent.retrieval.bm25_store import build_bm25_index
-from amf_rag_agent.retrieval.store import load_all_chunks
+# from amf_rag_agent.retrieval.bm25_store import build_bm25_index
+# from amf_rag_agent.retrieval.store import load_all_chunks
 
 # os.environ["LANGCHAIN_TRACING"] = "true"
 # os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY", "")
@@ -24,8 +24,8 @@ logger = logging.getLogger(__name__)
 async def lifespan(app: fastapi.FastAPI):
 
     config.setup_logging()
-    chunks = load_all_chunks()
-    build_bm25_index(chunks)
+    # chunks = load_all_chunks()
+    # build_bm25_index(chunks)
     
     yield
     # shutdown code here

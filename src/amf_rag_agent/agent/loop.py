@@ -1,20 +1,24 @@
 from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import search
-from amf_rag_agent.retrieval.bm25_store import search_bm25
+# from amf_rag_agent.retrieval.bm25_store import search_bm25
 from amf_rag_agent.retrieval.reranker import rerank_chunks
+from amf_rag_agent.retrieval.es_store import search_es
 # from amf_rag_agent.retrieval.query_expander import needs_expansion, expand_query
 import asyncio
 from amf_rag_agent import config
 from langsmith import traceable
 
+
 from anthropic import AsyncAnthropic
 import logging
+
 
 logger = logging.getLogger(__name__)
 
 
 api_key = config.ANTHROPIC_API_KEY
 client = AsyncAnthropic(api_key=api_key)
+
 
 def search_documents(query: str) -> list[dict]:
     """
@@ -40,7 +44,7 @@ def search_documents(query: str) -> list[dict]:
     else:
 
         logger.info("Query does not need expansion.")
-        '''
+    '''
     
     queries = [query]
 
@@ -56,7 +60,7 @@ def search_documents(query: str) -> list[dict]:
         logger.info("Getting embedding for query...")
         embedding = get_embeddings([q])[0]
 
-        for result in search(embedding, k=20) + search_bm25(q, k=20):
+        for result in search(embedding, k=20) + search_es(q, k=20):
 
             logger.info(f"Processing result: {result['text'][:50]}...")
             
@@ -82,6 +86,7 @@ tools = [
         }
     }
 ]
+
 
 @traceable
 async def run_agent(query: str, tools: list[dict]):
@@ -157,6 +162,7 @@ async def run_agent(query: str, tools: list[dict]):
     
     return {"answer": response.content[0].text, 
             "sources": sources}
+
 
 if __name__ == "__main__":
 

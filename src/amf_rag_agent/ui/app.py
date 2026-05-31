@@ -4,8 +4,8 @@ import streamlit as st
 # from amf_rag_agent.agent.loop import run_agent, tools
 # from amf_rag_agent.agent.graph import run_agent
 from amf_rag_agent.agent.graph_v2 import run_agent
-from amf_rag_agent.retrieval.store import load_all_chunks
-from amf_rag_agent.retrieval.bm25_store import build_bm25_index
+# from amf_rag_agent.retrieval.store import load_all_chunks
+# from amf_rag_agent.retrieval.bm25_store import build_bm25_index
 import asyncio
 from amf_rag_agent.config import setup_logging
 
@@ -19,8 +19,8 @@ from anthropic import RateLimitError, APIError
 logger = logging.getLogger(__name__)
 
 setup_logging()
-chunks = load_all_chunks()
-build_bm25_index(chunks)
+# chunks = load_all_chunks()
+# build_bm25_index(chunks)
 
 
 st.title("Bilingual (FR/EN) AMF RAG AGENT Chat Interface")

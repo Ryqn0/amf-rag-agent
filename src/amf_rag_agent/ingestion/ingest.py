@@ -3,6 +3,7 @@ from amf_rag_agent.ingestion.parser_fr import parse_xhtml
 from amf_rag_agent.ingestion.chunker import chunk_pages
 from amf_rag_agent.retrieval.embedder import get_embeddings
 from amf_rag_agent.retrieval.store import add_chunks
+from amf_rag_agent.retrieval.es_store import create_index, index_chunks
 import logging
 import json
 from pathlib import Path
@@ -19,7 +20,7 @@ def load_manifest() -> dict:
     Returns:
         dict: The manifest data containing ingested files and their metadata.
     """
-    
+
     logger.info("Loading manifest...")
 
     if Path(MANIFEST_PATH).exists():
@@ -114,12 +115,16 @@ def run_ingestion_pipeline(file_paths: list[str]):
         logger.info("Saving manifest...")
         save_manifest(manifest)
         logger.info("Manifest saved.")
+        logger.info("Indexing chunks into Elasticsearch...")
+        create_index()
+        logger.info("Elasticsearch index created.")
+        index_chunks(all_chunks)
         logger.info("Ingestion complete!")
 
     else:
 
         logger.info("No new files to ingest.")
-        
+
 
 if __name__ == "__main__": 
 

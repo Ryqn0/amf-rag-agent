@@ -5,12 +5,16 @@ services:
       - "8000:8000"
     volumes:
       - ./data:/app/data  # host path : container path
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - LANGCHAIN_TRACING_V2=true
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
       - LANGCHAIN_PROJECT=amf-rag-agent
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
   
   ui:
     build: 
@@ -21,6 +25,8 @@ services:
     depends_on:
       api:
         condition: service_started
+      elasticsearch:
+        condition: service_healthy
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - API_URL=http://api:8000
@@ -28,3 +34,24 @@ services:
       - LANGCHAIN_API_KEY=${LANGCHAIN_API_KEY}
       - LANGCHAIN_PROJECT=amf-rag-agent
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+
+  
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - ES_JAVA_OPTS=-Xms512m -Xmx512m
+    ports:
+      - "9200:9200"
+    volumes:
+      - es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl -s http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  es_data:

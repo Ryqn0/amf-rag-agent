@@ -8,6 +8,7 @@ dependencies = [
     "anthropic>=0.104.0",
     "beautifulsoup4>=4.14.3",
     "chromadb>=1.5.9",
+    "elasticsearch>=8.13,<9",
     "fastapi>=0.136.3",
     "langchain-anthropic>=1.4.3",
     "langchain-openai>=1.2.2",
