@@ -1,4 +1,4 @@
-import os
+import logging
 
 import streamlit as st
 # from amf_rag_agent.agent.loop import run_agent, tools
@@ -9,11 +9,14 @@ from amf_rag_agent.retrieval.bm25_store import build_bm25_index
 import asyncio
 from amf_rag_agent.config import setup_logging
 
+from anthropic import RateLimitError, APIError
+
 # os.environ["LANGCHAIN_TRACING"] = "true"
 # os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY", "")
 # os.environ["LANGCHAIN_PROJECT"] = "amf-rag-agent"
 # os.environ["LANGSMITH_ENDPOINT"] = "https://eu.api.smith.langchain.com"
 
+logger = logging.getLogger(__name__)
 
 setup_logging()
 chunks = load_all_chunks()
@@ -64,6 +67,15 @@ if prompt := st.chat_input("What is up?"):
                     "content": data['answer']
                 })
 
+            except RateLimitError as e:
+
+                st.error("Rate limit exceeded. Please try again later.")
+
+            except APIError as e:
+
+                st.error("An error occurred while processing your request.")
+
             except Exception as e:
 
+                logger.error(f"Error processing request: {e}")
                 st.error("Something went wrong - please try again")

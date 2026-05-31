@@ -1,7 +1,8 @@
 import os
-
+import logging
 import pydantic
 import fastapi
+from anthropic import RateLimitError, APIError
 from contextlib import asynccontextmanager
 
 from amf_rag_agent import config
@@ -15,6 +16,9 @@ from amf_rag_agent.retrieval.store import load_all_chunks
 # os.environ["LANGCHAIN_API_KEY"] = os.getenv("LANGCHAIN_API_KEY", "")
 # os.environ["LANGCHAIN_PROJECT"] = "amf-rag-agent"
 # os.environ["LANGSMITH_ENDPOINT"] = "https://eu.api.smith.langchain.com"
+
+logger = logging.getLogger(__name__)
+
 
 @asynccontextmanager
 async def lifespan(app: fastapi.FastAPI):
@@ -43,9 +47,25 @@ class AnswerResponse(pydantic.BaseModel):
 @app.post("/ask", response_model=AnswerResponse)
 async def ask(request: QuestionRequest) -> AnswerResponse:
 
-    response = await run_agent(request.question)
+    try:
 
-    return AnswerResponse(
-        answer=response['answer'],
-        sources=response['sources']
-    )
+        response = await run_agent(request.question)
+
+        return AnswerResponse(
+            answer=response['answer'],
+            sources=response['sources']
+        )
+    
+    except RateLimitError as e:
+
+        raise fastapi.HTTPException(status_code=429, detail=str("Rate limit exceeded. Please try again later."))
+    
+    except APIError as e:
+
+        raise fastapi.HTTPException(status_code=500, detail=str("An error occurred while processing your request."))
+    
+    except Exception as e:
+    
+        logger.error(f"Error processing request: {e}")
+
+        raise fastapi.HTTPException(status_code=500, detail=str("An unexpected error occurred. Please try again later."))
