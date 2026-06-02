@@ -15,6 +15,7 @@ services:
       - LANGCHAIN_PROJECT=amf-rag-agent
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      - API_KEYS=${API_KEYS}
   
   ui:
     build: 
@@ -35,6 +36,7 @@ services:
       - LANGCHAIN_PROJECT=amf-rag-agent
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+      
 
   
   elasticsearch:

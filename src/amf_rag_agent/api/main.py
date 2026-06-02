@@ -2,9 +2,12 @@ import os
 import logging
 import pydantic
 import fastapi
-from fastapi import Security, HTTPException, status, Depends
+from fastapi import Security, HTTPException, status, Depends, Request
 from fastapi.security import APIKeyHeader
 from anthropic import RateLimitError, APIError
+from slowapi import Limiter, _rate_limit_exceeded_handler
+from slowapi.util import get_remote_address
+from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 
 from amf_rag_agent import config
@@ -55,7 +58,27 @@ def verify_api_key(api_key: str = Security(api_key_header)) -> str:
     return api_key
 
 
+
+def get_api_key_or_ip(request: Request) -> str:
+    """
+    Get the API key from the request header or fall back to the client's IP address for rate limiting.
+    Args:
+        request (Request): The incoming HTTP request.
+    Returns:
+        str: The API key if provided, otherwise the client's IP address.
+    """
+
+    return request.headers.get("X-API-Key") or get_remote_address(request)
+
+
+limiter = Limiter(key_func=get_api_key_or_ip)
+
+
 app = fastapi.FastAPI(lifespan=lifespan)
+
+app.state.limiter = limiter
+
+app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 
 class QuestionRequest(pydantic.BaseModel):
 
@@ -69,11 +92,12 @@ class AnswerResponse(pydantic.BaseModel):
 
 
 @app.post("/ask", response_model=AnswerResponse)
-async def ask(request: QuestionRequest, api_key: str = Depends(verify_api_key)) -> AnswerResponse:
+@limiter.limit("10/minute")
+async def ask(request: Request, question_request: QuestionRequest, api_key: str = Depends(verify_api_key)) -> AnswerResponse:
 
     try:
 
-        response = await run_agent(request.question)
+        response = await run_agent(question_request.question)
 
         return AnswerResponse(
             answer=response['answer'],
