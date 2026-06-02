@@ -70,19 +70,66 @@ Respond with ONLY a JSON object: {{"score": 0 or 1, "reasoning": "brief explanat
     logger.info(f"Faithfulness evaluation response: {response}")
     raw = response.content
     match = re.search(r"\{.*\}", raw, re.DOTALL)
+
     if not match:
+
         logger.error(f"Failed to parse JSON from judge response: {raw}")
         return {"key": "faithfulness", "score": None, "comment": f"Failed to parse judge response: {raw[:200]}..."}
+    
     else:
+
         result = json.loads(match.group(0))
 
     logger.info(f"Parsed faithfulness evaluation result: {result}")
     return {"key": "faithfulness", "score": result["score"], "comment": result["reasoning"]}
 
+
+def relevance(run, example) -> dict:
+    """Evaluate the relevance of the agent's answer to the question.
+    Args:
+        run: The output from the agent execution, containing the answer and sources.
+        example: The original example containing the question and expected answer.
+    Returns:
+        A dictionary containing the relevance score and reasoning.
+    """
+
+    logger.info("Evaluating relevance of the answer to the question.")
+    answer = run.outputs["answer"]
+    question = example.inputs["question"]
+
+    prompt = f"""You are evaluating whether an answer is relevant to the question.
+An answer is RELEVANT if it directly addresses what was asked.
+It is IRRELEVANT if it is off-topic, evasive, or answers a different question.
+
+Question: {question}
+
+Answer: {answer}
+
+Score 1 if the answer directly addresses the question, 0 if it does not.
+Respond with ONLY a JSON object: {{"score": 0 or 1, "reasoning": "brief explanation"}}"""
+
+    logger.info(f"Prompt for relevance evaluation: {prompt}")
+    response = judge.invoke(prompt)
+    logger.info(f"Relevance evaluation response: {response}")
+    raw = response.content
+    logger.info(f"Raw relevance evaluation response: {raw}")
+    match = re.search(r"\{.*\}", raw, re.DOTALL)
+
+    logger.info(f"Regex match for relevance evaluation response: {match}")
+    if not match:
+
+        logger.error(f"Failed to parse JSON from judge response: {raw}")
+        return {"key": "relevance", "score": None, "comment": f"Failed to parse: {raw[:200]}"}
+    
+    logger.info(f"Parsing JSON from relevance evaluation response: {match.group(0)}")
+    result = json.loads(match.group(0))
+    return {"key": "relevance", "score": result["score"], "comment": result["reasoning"]}
+
+
 logger.info("Starting evaluation of agent performance on faithfulness.")
 results = evaluate(
     run_agent_target,
     data="amf-rag-eval",
-    evaluators=[faithfulness],
-    experiment_prefix="faithfulness-baseline",
+    evaluators=[faithfulness, relevance],
+    experiment_prefix="faithfulness-and-relevance-baseline",
 )

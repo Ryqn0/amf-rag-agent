@@ -1,4 +1,4 @@
-from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage
+from langchain_core.messages import BaseMessage, HumanMessage, AIMessage, ToolMessage, SystemMessage
 from langchain_anthropic import ChatAnthropic
 from langchain_openai import ChatOpenAI
 from langchain_core.tools import tool
@@ -18,6 +18,13 @@ class AgentState(TypedDict):
 
     messages: Annotated[list[BaseMessage], add]    # Conversation history, including user messages, assistant responses, and tool results.
     sources: Annotated[list[dict], add]             # Retrieved documents or sources relevant to the query.
+
+
+SYSTEM_PROMPT = """You are a financial research assistant answering questions about AMF regulatory filings.
+
+Answer ONLY using information from the retrieved source documents. If the sources do not contain enough information to fully answer, explicitly state what you could not find rather than filling in from general knowledge. Never state facts about a company that are not present in the retrieved sources.
+
+Always cite which company and document your information comes from."""
 
 
 @tool
@@ -133,7 +140,7 @@ async def run_agent(query: str) -> AgentState:
 
     logger.info("Running agent with initial state.")
     initial_state = {
-        "messages": [HumanMessage(content=query)],
+        "messages": [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=query)],
         "sources": []
     }
 
