@@ -135,12 +135,14 @@ graph.add_edge("execute_tools", "call_llm")
 app = graph.compile()
 
 @traceable
-async def run_agent(query: str) -> AgentState:
+async def run_agent(query: str, history: list[BaseMessage] | None = None) -> AgentState:
     """Run the agent with the given initial state."""
+
+    history = history or []
 
     logger.info("Running agent with initial state.")
     initial_state = {
-        "messages": [SystemMessage(content=SYSTEM_PROMPT), HumanMessage(content=query)],
+        "messages": [SystemMessage(content=SYSTEM_PROMPT)] + history + [HumanMessage(content=query)],
         "sources": []
     }
 

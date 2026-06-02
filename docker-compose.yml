@@ -8,6 +8,8 @@ services:
     depends_on:
       elasticsearch:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
       - LANGCHAIN_TRACING_V2=true
@@ -16,6 +18,7 @@ services:
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
       - API_KEYS=${API_KEYS}
+      - REDIS_URL=redis://redis:6379
   
   ui:
     build: 
@@ -36,6 +39,14 @@ services:
       - LANGCHAIN_PROJECT=amf-rag-agent
       - OPENAI_API_KEY=${OPENAI_API_KEY}
       - ELASTICSEARCH_URL=http://elasticsearch:9200
+  
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
       
 
   
@@ -57,3 +68,4 @@ services:
 
 volumes:
   es_data:
+  redis_data:

@@ -9,11 +9,13 @@ from slowapi import Limiter, _rate_limit_exceeded_handler
 from slowapi.util import get_remote_address
 from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
+import uuid
 
 from amf_rag_agent import config
 # from amf_rag_agent.agent.graph import run_agent
 # from amf_rag_agent.agent.loop import run_agent, tools
 from amf_rag_agent.agent.graph_v2 import run_agent
+from amf_rag_agent.session_store import get_history, append_messages, dicts_to_message
 # from amf_rag_agent.retrieval.bm25_store import build_bm25_index
 # from amf_rag_agent.retrieval.store import load_all_chunks
 
@@ -83,12 +85,14 @@ app.add_exception_handler(RateLimitExceeded, _rate_limit_exceeded_handler)
 class QuestionRequest(pydantic.BaseModel):
 
     question: str
+    session_id: str | None = None
 
 
 class AnswerResponse(pydantic.BaseModel):
 
     answer: str
     sources: list[dict]
+    session_id: str
 
 
 @app.post("/ask", response_model=AnswerResponse)
@@ -97,11 +101,25 @@ async def ask(request: Request, question_request: QuestionRequest, api_key: str 
 
     try:
 
-        response = await run_agent(question_request.question)
+        logger.info(f"Received question: {question_request.question} with session_id: {question_request.session_id}")
+        session_id = question_request.session_id or str(uuid.uuid4())
 
+        logger.info(f"Using session_id: {session_id} for conversation history.")
+        history_dicts = get_history(session_id)
+        logger.info(f"Retrieved history for session_id {session_id}: {history_dicts}")
+        history = dicts_to_message(history_dicts)
+
+        logger.info(f"Converted history dicts to messages for session_id {session_id}: {history}")
+        response = await run_agent(question_request.question, history=history)
+
+        logger.info(f"Agent response for session_id {session_id}: {response}")
+        append_messages(session_id, [{"role": "user", "content": question_request.question}, {"role": "assistant", "content": response["answer"]},])
+
+        logger.info(f"Appended user question and agent answer to history for session_id {session_id}.")
         return AnswerResponse(
             answer=response['answer'],
-            sources=response['sources']
+            sources=response['sources'],
+            session_id=session_id,
         )
     
     except RateLimitError as e:
