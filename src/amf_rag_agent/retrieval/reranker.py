@@ -1,5 +1,8 @@
 from sentence_transformers import CrossEncoder
 from logging import getLogger
+import torch
+
+DEVICE = "cuda" if torch.cuda.is_available() else "cpu"
 
 logger = getLogger(__name__)
 
@@ -12,7 +15,7 @@ def get_reranker_model():
     if _model is None:
 
         logger.info("Loading cross-encoder model for reranking...")
-        _model = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1")
+        _model = CrossEncoder("cross-encoder/mmarco-mMiniLMv2-L12-H384-v1", device=DEVICE)
         logger.info("Cross-encoder model loaded.")
 
     return _model

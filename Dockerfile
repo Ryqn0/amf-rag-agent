@@ -23,8 +23,12 @@ COPY data/vectorstore/ ./data/vectorstore/
 # Install package itself
 RUN uv pip install --system --no-deps .
 
-# Installing the embedder model 
-RUN python -c "from sentence_transformers import SentenceTransformer; \
+# Install torch with cuda support
+RUN pip install --force-reinstall torch --index-url https://download.pytorch.org/whl/cu124
+
+# Installing the embedder model and cross encoder model to cache them in the image
+RUN python -c "from sentence_transformers import SentenceTransformer, CrossEncoder; \
+    CrossEncoder('cross-encoder/mmarco-mMiniLMv2-L12-H384-v1'); \
     SentenceTransformer('paraphrase-multilingual-MiniLM-L12-v2')"
 
 EXPOSE 8000
