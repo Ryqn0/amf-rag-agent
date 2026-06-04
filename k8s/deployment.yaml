@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amf-rag-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: amf-rag-api
+  template:
+    metadata:
+      labels:
+        app: amf-rag-api
+    spec:
+      containers:
+      - name: api
+        image: amf-rag-api:cpu
+        imagePullPolicy: IfNotPresent
+        ports:
+          - containerPort: 8000
+        envFrom:
+          - secretRef:
+              name: amf-rag-secrets
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
