@@ -21,10 +21,16 @@ def test_search_documents():
             with patch("amf_rag_agent.agent.loop.search_es") as mock_search_es:
                 mock_search_es.return_value = []
 
-                results = search_documents("What are the main risk factors?")
-                assert isinstance(results, list)
-                assert len(results) == 2
-                assert all(isinstance(result, dict) for result in results)
-                assert all("text" in result and "source" in result and "page_number" in result for result in results)
-                mock_embed.assert_called_once_with(["What are the main risk factors?"])
-                mock_search.assert_called_once()
+                with patch("amf_rag_agent.agent.loop.rerank_chunks") as mock_rerank:
+                    mock_rerank.return_value = [
+                        {"text": "Document 1", "source": "doc1.pdf", "page_number": 1, "distance": 0.1},
+                        {"text": "Document 2", "source": "doc2.pdf", "page_number": 5, "distance": 0.2},
+                    ]
+
+                    results = search_documents("What are the main risk factors?")
+                    assert isinstance(results, list)
+                    assert len(results) == 2
+                    assert all(isinstance(result, dict) for result in results)
+                    assert all("text" in result and "source" in result and "page_number" in result for result in results)
+                    mock_embed.assert_called_once_with(["What are the main risk factors?"])
+                    mock_search.assert_called_once()
