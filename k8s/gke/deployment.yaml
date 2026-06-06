@@ -1,0 +1,42 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: amf-rag-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: amf-rag-api
+  template:
+    metadata:
+      labels:
+        app: amf-rag-api
+    spec:
+      containers:
+      - name: api
+        image: europe-west9-docker.pkg.dev/amf-rag-agent/amf-rag/amf-rag-api:cpu
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 8000
+        envFrom:
+          - secretRef:
+              name: amf-rag-secrets
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "1000m"
+            memory: "2Gi"
+        livenessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /docs
+            port: 8000
+          initialDelaySeconds: 15
+          periodSeconds: 5
