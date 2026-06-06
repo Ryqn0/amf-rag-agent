@@ -24,7 +24,8 @@ docker push REGION-docker.pkg.dev/PROJECT_ID/amf-rag/amf-rag-api:cpu
 
 ## Creating cluster
 
-gcloud container clusters create amf-rag-cluster --num-nodes=2 --machine-type=e2-standard-2 --region=REGION
+gcloud container clusters create amf-rag-cluster --num-nodes=2 --machine-type=e2-standard-2 --region=REGION # --zone=REGION rather --disk-size=50 --disk-type=pd-standard
+
 
 ## Creating secrets
 
