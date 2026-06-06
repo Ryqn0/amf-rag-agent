@@ -1,0 +1,35 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+
+  test:
+    runs-on: ubuntu-latest
+
+    env:
+      ANTHROPIC_API_KEY: "sk-dummy-anthropic-for-ci"
+      OPENAI_API_KEY: "sk-dummy-openai-for-ci"
+      API_KEYS: "dev-key-12345"
+      ELASTICSEARCH_URL: "http://localhost:9200"
+      REDIS_URL: "redis://localhost:6379"
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+    
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Set up Python 3.13
+        run: uv python install 3.13
+
+      - name: Install dependencies
+        run: uv sync
+
+      - name: Run tests
+        run: uv run pytest -v
