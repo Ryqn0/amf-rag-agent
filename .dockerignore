@@ -5,3 +5,4 @@ __pycache__/
 data/raw/
 .pytest_cache
 __pycache__
+k8s/secret.yaml
