@@ -1,6 +1,8 @@
 services:
   api:
-    build: .
+    build: 
+      context: .
+      dockerfile: Dockerfile.cpu
     ports:
       - "8000:8000"
     volumes:
@@ -66,6 +68,24 @@ services:
       interval: 10s
       timeout: 5s
       retries: 5
+
+
+  prometheus:
+    image: prom/prometheus:latest
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9090:9090"
+
+
+  grafana:
+    image: grafana/grafana:latest
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    depends_on:
+      - prometheus
 
 volumes:
   es_data:

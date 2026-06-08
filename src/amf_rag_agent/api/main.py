@@ -11,6 +11,9 @@ from slowapi.errors import RateLimitExceeded
 from contextlib import asynccontextmanager
 import uuid
 
+from prometheus_client import Counter, Histogram, generate_latest, CONTENT_TYPE_LATEST
+import time
+
 from amf_rag_agent import config
 # from amf_rag_agent.agent.graph import run_agent
 # from amf_rag_agent.agent.loop import run_agent, tools
@@ -42,6 +45,10 @@ async def lifespan(app: fastapi.FastAPI):
 
 api_key_header = APIKeyHeader(name="X-API-Key", auto_error=False)
 VALID_API_KEYS = set(os.getenv("API_KEYS", "").split(","))
+
+ASK_REQUESTS = Counter("ask_requests_total", "Total number of /ask requests received", ["status"])
+
+ASK_LATENCY = Histogram("ask_request_latency_seconds", "Latency of /ask requests in seconds", buckets=[0.5, 1, 2, 5, 10, 20, 40, 60])
 
 
 def verify_api_key(api_key: str = Security(api_key_header)) -> str:
@@ -96,6 +103,11 @@ class AnswerResponse(pydantic.BaseModel):
     session_id: str
 
 
+@app.get("/metrics")
+def metrics():
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -137,6 +149,8 @@ def ready(response: Response):
 @limiter.limit("10/minute")
 async def ask(request: Request, question_request: QuestionRequest, api_key: str = Depends(verify_api_key)) -> AnswerResponse:
 
+    start_time = time.perf_counter()
+    outcome = "success"
     try:
 
         logger.info(f"Received question: {question_request.question} with session_id: {question_request.session_id}")
@@ -162,14 +176,24 @@ async def ask(request: Request, question_request: QuestionRequest, api_key: str 
     
     except RateLimitError as e:
 
+        outcome = "rate_limited"
+
         raise fastapi.HTTPException(status_code=429, detail=str("Rate limit exceeded. Please try again later."))
     
     except APIError as e:
 
+        outcome = "api_error"
+
         raise fastapi.HTTPException(status_code=500, detail=str("An error occurred while processing your request."))
     
     except Exception as e:
-    
+
+        outcome = "failure"
         logger.error(f"Error processing request: {e}")
 
         raise fastapi.HTTPException(status_code=500, detail=str("An unexpected error occurred. Please try again later."))
+
+    finally:
+
+        ASK_LATENCY.observe(time.perf_counter() - start_time)
+        ASK_REQUESTS.labels(status=outcome).inc()
