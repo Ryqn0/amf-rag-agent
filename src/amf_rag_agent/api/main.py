@@ -2,7 +2,7 @@ import os
 import logging
 import pydantic
 import fastapi
-from fastapi import Security, HTTPException, status, Depends, Request
+from fastapi import Security, HTTPException, Response, status, Depends, Request
 from fastapi.security import APIKeyHeader
 from anthropic import RateLimitError, APIError
 from slowapi import Limiter, _rate_limit_exceeded_handler
@@ -15,7 +15,8 @@ from amf_rag_agent import config
 # from amf_rag_agent.agent.graph import run_agent
 # from amf_rag_agent.agent.loop import run_agent, tools
 from amf_rag_agent.agent.graph_v2 import run_agent
-from amf_rag_agent.session_store import get_history, append_messages, dicts_to_message
+from amf_rag_agent.retrieval.es_store import get_es_client
+from amf_rag_agent.session_store import get_history, append_messages, dicts_to_message, get_redis_client
 # from amf_rag_agent.retrieval.bm25_store import build_bm25_index
 # from amf_rag_agent.retrieval.store import load_all_chunks
 
@@ -94,6 +95,43 @@ class AnswerResponse(pydantic.BaseModel):
     sources: list[dict]
     session_id: str
 
+
+@app.get("/health")
+def health():
+    return {"status": "ok"}
+
+
+@app.get("/ready")
+def ready(response: Response):
+
+    checks = {}
+
+    redis_client = get_redis_client()
+    try:
+        if redis_client.ping():
+           checks["redis"] = True
+        else:
+            checks["redis"] = False
+    except Exception as e:
+        logger.error(f"Redis health check failed: {e}")
+        checks["redis"] = False
+    
+    es_client = get_es_client()
+    try:
+        if es_client.ping():
+            checks["elasticsearch"] = True
+        else:
+            checks["elasticsearch"] = False
+    except Exception as e:
+        logger.error(f"Elasticsearch health check failed: {e}")
+        checks["elasticsearch"] = False
+
+    all_ok = all(checks.values())
+    if not all_ok:
+        response.status_code = status.HTTP_503_SERVICE_UNAVAILABLE
+    return {"ready": all_ok, "checks": checks}
+
+    
 
 @app.post("/ask", response_model=AnswerResponse)
 @limiter.limit("10/minute")
